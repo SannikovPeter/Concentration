@@ -20,6 +20,7 @@ struct Card: Hashable {
     var isFaceUp = false
     var isMatched = false
     var id : Int
+    var image: Character = "?"
     
     private static var idFactory = 0
     
@@ -28,7 +29,8 @@ struct Card: Hashable {
         return idFactory
     }
     
-    init(){
+    init(image: Character) {
         id = Card.getUniqueId()
+        self.image = image
     }
 }

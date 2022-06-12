@@ -9,23 +9,55 @@ import UIKit
 
  class ConcentrationViewController: UIViewController {
     
-    private lazy var game = Concentration(numberOfPairsOfCards: (cardList.count + 1) / 2)
+     private var game: Concentration?
+     
+     @IBOutlet private weak var startAgane: UIButton!
+    
+     @IBOutlet var cardsList: [CardView]!
+     
+     @IBOutlet private weak var flipsLabel: UILabel! {
+        didSet {
+            updateFlipCount()
+        }
+    }
+     
+     var theme: String = "👻🧟‍♀️🥶😈🎃🦇👽🙀☠️🦠"
+     
+     private var flipCounter = 0 {
+         didSet {
+             updateFlipCount()
+         }
+     }
+     
+     override func viewDidLoad() {
+         super.viewDidLoad()
+         game = Concentration(numberOfPairsOfCards: (cardsList.count + 1) / 2, theme: theme)
+         for (index, card) in cardsList.enumerated() {
+             card.image = game?.cards[index].image ?? Character("?")
+         }
+         for cardView in cardsList {
+             cardView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(flipCard(_:))))
+         }
+     }
+     
+     @objc func flipCard(_ recognizer: UITapGestureRecognizer) {
+         switch recognizer.state {
+         case .ended:
+             if let chosenCard = recognizer.view as? CardView {
+                 UIView.transition(
+                     with: chosenCard,
+                     duration: 0.6,
+                     options: [.transitionFlipFromLeft],
+                     animations: {
+                         chosenCard.isFaceUp = !chosenCard.isFaceUp
+                     }
+                 )
+             }
+         default: break
+         }
+     }
+     
 
-    @IBOutlet private weak var startAgane: UIButton!
-    
-    @IBOutlet private var cardList: [UIButton]!
-    
-    @IBOutlet private weak var flipsLabel: UILabel! {
-        didSet {
-            updateFlipCount()
-        }
-    }
-    
-    private var flipCounter = 0 {
-        didSet {
-            updateFlipCount()
-        }
-    }
     
     private func updateFlipCount() {
         let attributes: [NSAttributedString.Key: Any] = [
@@ -35,74 +67,14 @@ import UIKit
         let atributedString = NSAttributedString(string: "Flips: \(flipCounter)", attributes: attributes)
         flipsLabel.attributedText = atributedString
     }
-    
-    @IBAction private func touchCard(_ sender: UIButton) {
-        if let cardNumber = cardList.firstIndex(of: sender) {
-            game.chooseCard(at: cardNumber)
-            updateViewFromModel()
-            flipCounter += 1
-        }
-    }
-    
-    private func updateViewFromModel() {
-        if cardList != nil {
-            for index in cardList.indices {
-                let button = cardList[index]
-                let card = game.cards[index]
-                if card.isFaceUp{
-                    button.backgroundColor = .lightGray
-                    button.setTitle(emoji(for: card), for: .normal)
-                } else {
-                    button.backgroundColor = card.isMatched ? .clear : .link
-                    button.setTitle("", for: .normal)
-                }
-            }
-            if game.isEndGame == true {
-                startAgane.alpha = 1
-                startAgane.isEnabled = true
-            }
-        }
-    }
      
-     var theme: String? {
-         didSet {
-             emojiChoises = theme ?? ""
-             emoji = [:]
-             updateViewFromModel()
-         }
-     }
-    
-    private var emojiChoises = "👻🧟‍♀️🥶😈🎃🦇👽🙀☠️🦠"
-
-    private var emoji = [Card:String]()
-    
-    private func emoji(for card: Card) -> String {
-        if emoji[card] == nil, emojiChoises.count > 0 {
-            let randomStringIndex = emojiChoises.index(emojiChoises.startIndex, offsetBy: emojiChoises.count.arc4random)
-            emoji[card] = String(emojiChoises.remove(at: randomStringIndex))
-        }
-        return emoji[card] ?? "?"
-    }
-    
     @IBAction private func startAganeAction(_ sender: UIButton) {
-        game.startAgane()
+//        game.startAgane()
         startAgane.alpha = 0
         startAgane.isEnabled = false
-        updateViewFromModel()
         flipCounter = 0
     }
 }
 
-extension Int {
-    var arc4random: Int {
-        if self > 0 {
-            return Int(arc4random_uniform(UInt32(self)))
-        } else if self < 0 {
-            return -Int(arc4random_uniform(UInt32(self)))
-        } else{
-            return 0
-        }
-    }
-}
 
 
